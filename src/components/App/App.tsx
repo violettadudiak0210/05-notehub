@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "use-debounce";
 
 import NoteList from "../NoteList/NoteList";
-import NoteModal from "../NoteModal/NoteModal";
+import NoteModal from "../Modal/Modal";
 import SearchBox from "../SearchBox/SearchBox";
 import Pagination from "../Pagination/Pagination";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
