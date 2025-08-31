@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import css from "./Modal.module.css";
 
@@ -9,11 +9,15 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true); // компонент відрендерився на клієнті
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
 
     if (isOpen) {
@@ -27,7 +31,7 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null; // рендеримо тільки на клієнті
 
   const modalRoot = document.getElementById("modal-root");
   if (!modalRoot) return null;
@@ -35,9 +39,7 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
   return createPortal(
     <div className={css.backdrop} onClick={onClose}>
       <div className={css.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={css.closeButton} onClick={onClose}>
-          ✖
-        </button>
+        <button className={css.closeButton} onClick={onClose}>✖</button>
         {children}
       </div>
     </div>,
