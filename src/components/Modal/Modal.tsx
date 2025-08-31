@@ -9,10 +9,11 @@ interface ModalProps {
 }
 
 const Modal = ({ isOpen, onClose, children }: ModalProps) => {
-  const [mounted, setMounted] = useState(false);
+  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
 
+  // шукаємо modal-root тільки на клієнті
   useEffect(() => {
-    setMounted(true); // компонент відрендерився на клієнті
+    setModalRoot(document.getElementById("modal-root"));
   }, []);
 
   useEffect(() => {
@@ -31,10 +32,7 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || !mounted) return null; // рендеримо тільки на клієнті
-
-  const modalRoot = document.getElementById("modal-root");
-  if (!modalRoot) return null;
+  if (!isOpen || !modalRoot) return null;
 
   return createPortal(
     <div className={css.backdrop} onClick={onClose}>
