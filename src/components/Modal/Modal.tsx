@@ -1,37 +1,46 @@
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import NoteForm from "../NoteForm/NoteForm";
+// src/components/Modal/Modal.tsx
+import React, { useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import css from './Modal.module.css';
 
-import css from "./Modal.module.css";
-
-interface NoteModalProps {
+interface ModalProps {
+  isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  children: React.ReactNode;
 }
 
-export default function NoteModal({ onClose, onSuccess }: NoteModalProps) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
         onClose();
       }
-    };
+    },
+    [onClose],
+  );
 
-    document.body.style.overflow = "hidden";
+  useEffect(() => {
+    if (!isOpen) return;
 
-    window.addEventListener("keydown", handleKeyDown);
+    const { overflow } = document.body.style;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = overflow;
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onClose]);
+  }, [isOpen, handleKeyDown]);
 
-  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) {
+  const handleBackdropClick = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) => {
+    if (e.target === e.currentTarget) {
       onClose();
     }
   };
+
+  if (!isOpen) return null;
 
   return createPortal(
     <div
@@ -40,10 +49,10 @@ export default function NoteModal({ onClose, onSuccess }: NoteModalProps) {
       aria-modal="true"
       onClick={handleBackdropClick}
     >
-      <div className={css.modal}>
-        {<NoteForm onClose={onClose} onSuccess={onSuccess} />}
-      </div>
+      <div className={css.modal}>{children}</div>
     </div>,
-    document.body
+    document.body,
   );
-}
+};
+
+export default Modal;
