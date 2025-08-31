@@ -11,7 +11,6 @@ interface ModalProps {
 const Modal = ({ isOpen, onClose, children }: ModalProps) => {
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
 
-  // шукаємо modal-root тільки на клієнті
   useEffect(() => {
     setModalRoot(document.getElementById("modal-root"));
   }, []);
