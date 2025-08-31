@@ -8,7 +8,7 @@ import NoteModal from "../Modal/Modal";
 import SearchBox from "../SearchBox/SearchBox";
 import Pagination from "../Pagination/Pagination";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
-//css
+
 import css from "./App.module.css";
 
 export default function App() {
@@ -47,12 +47,13 @@ export default function App() {
           Create note +
         </button>
       </header>
+
       {isLoading && <strong className={css.loading}>Loading notes...</strong>}
       {isError && searchTerm.trim() !== "" && (
         <ErrorMessage message="Something went wrong. Please try again." />
       )}
       {data && <NoteList notes={data.notes} />}
-      {isModalOpen && <NoteModal onClose={closeModal} onSuccess={closeModal} />}
+      {isModalOpen && <NoteModal onClose={closeModal} />}
     </div>
   );
 }

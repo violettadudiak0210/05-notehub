@@ -3,14 +3,15 @@ import { createPortal } from "react-dom";
 import css from "./Modal.module.css";
 
 interface ModalProps {
-  isOpen: boolean;
+  isOpen?: boolean; // опціонально
   onClose: () => void;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+const Modal = ({ isOpen = true, onClose, children }: ModalProps) => {
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
 
+  // Отримуємо modal-root після mount
   useEffect(() => {
     setModalRoot(document.getElementById("modal-root"));
   }, []);
