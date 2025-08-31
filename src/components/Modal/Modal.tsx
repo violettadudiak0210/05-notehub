@@ -1,7 +1,6 @@
-// src/components/Modal/Modal.tsx
-import React, { useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import css from './Modal.module.css';
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
+import css from "./Modal.module.css";
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,49 +8,40 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+const Modal = ({ isOpen, onClose, children }: ModalProps) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
         onClose();
       }
-    },
-    [onClose],
-  );
+    };
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const { overflow } = document.body.style;
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      window.addEventListener("keydown", handleKeyDown);
+    }
 
     return () => {
-      document.body.style.overflow = overflow;
-      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, handleKeyDown]);
-
-  const handleBackdropClick = (
-    e: React.MouseEvent<HTMLDivElement, MouseEvent>,
-  ) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
+  const modalRoot = document.getElementById("modal-root");
+  if (!modalRoot) return null;
+
   return createPortal(
-    <div
-      className={css.backdrop}
-      role="dialog"
-      aria-modal="true"
-      onClick={handleBackdropClick}
-    >
-      <div className={css.modal}>{children}</div>
+    <div className={css.backdrop} onClick={onClose}>
+      <div className={css.modal} onClick={(e) => e.stopPropagation()}>
+        <button className={css.closeButton} onClick={onClose}>
+          ✖
+        </button>
+        {children}
+      </div>
     </div>,
-    document.body,
+    modalRoot
   );
 };
 
