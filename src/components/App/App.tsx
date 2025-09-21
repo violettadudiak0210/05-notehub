@@ -1,59 +1,117 @@
-import { useState } from "react";
-import { fetchNotes } from "../../services/noteService";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useDebounce } from "use-debounce";
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchNotes } from '../../services/noteService';
+import type { ErrorResponse } from '../../services/noteService';
+import NoteList from '../NoteList/NoteList';
+import SearchBox from '../SearchBox/SearchBox';
+import Pagination from '../Pagination/Pagination';
+import Modal from '../Modal/Modal';
+import NoteForm from '../NoteForm/NoteForm';
+import { useDebounce } from '../Hooks/useDebounce';
+import css from './App.module.css';
+import { AxiosError } from 'axios';
 
-import NoteList from "../NoteList/NoteList";
-import NoteModal from "../Modal/Modal";
-import SearchBox from "../SearchBox/SearchBox";
-import Pagination from "../Pagination/Pagination";
-import ErrorMessage from "../ErrorMessage/ErrorMessage";
+import Loader from '../Loader/Loader';
+import ErrorMessage from '../ErrorMessage/ErrorMessage';
 
-import css from "./App.module.css";
-
-export default function App() {
+const App = () => {
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [debounceSearchTerm] = useDebounce(searchTerm, 1000);
-  const perPage = 12;
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["notes", debounceSearchTerm, currentPage],
-    queryFn: () => fetchNotes(currentPage, debounceSearchTerm, perPage),
-    placeholderData: keepPreviousData,
-  });
+  const debouncedSearch = useDebounce(search, 500);
+  const queryClient = useQueryClient();
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const { data, isLoading, isError, error } = useQuery({
+  queryKey: ['notes', page, debouncedSearch],
+  queryFn: () => fetchNotes({ page, perPage: 12, search: debouncedSearch }),
+  placeholderData: () => ({
+    notes: [],
+    page,
+    perPage: 12,
+    totalPages: 1,
+    totalNotes: 0,
+  }),
+  retry: (failureCount, err: AxiosError<ErrorResponse>) => {
+    if (
+      err.response?.status === 400 ||
+      err.response?.status === 401 ||
+      err.response?.status === 403
+    ) {
+      return false;
+    }
+    return failureCount < 3;
+  },
+});
 
-  const handleSearchChange = (newTerm: string) => {
-    setSearchTerm(newTerm);
-    setCurrentPage(1);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setPage(1);
   };
+
+  if (isLoading) {
+    return (
+      <div className={css.app}>
+        <header className={css.toolbar}>
+          <SearchBox value={search} onChange={handleSearchChange} />
+          <button className={css.button} onClick={() => setIsModalOpen(true)}>
+            Create note +
+          </button>
+        </header>
+        <Loader />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={css.app}>
+        <header className={css.toolbar}>
+          <SearchBox value={search} onChange={handleSearchChange} />
+          <button className={css.button} onClick={() => setIsModalOpen(true)}>
+            Create note +
+          </button>
+        </header>
+        <ErrorMessage
+          message={`Помилка завантаження нотаток: ${error?.response?.data?.message || error?.message || 'Невідома помилка'}`}
+        />
+        <button onClick={() => queryClient.invalidateQueries({ queryKey: ['notes'] })}>
+          Спробувати ще раз
+        </button>
+      </div>
+    );
+  }
+
+  const notes = data?.notes ?? [];
+  const totalPages = data?.totalPages ?? 1;
 
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
-        <SearchBox value={searchTerm} onChange={handleSearchChange} />
-        {data && data.totalPages > 1 && (
-          <Pagination
-            currentPage={currentPage}
-            pageCount={data.totalPages}
-            onPageChange={setCurrentPage}
-          />
+        <SearchBox value={search} onChange={handleSearchChange} />
+        {totalPages > 1 && (
+          <Pagination pageCount={totalPages} currentPage={page} onPageChange={setPage} />
         )}
-        <button className={css.button} onClick={openModal}>
+        <button className={css.button} onClick={() => setIsModalOpen(true)}>
           Create note +
         </button>
       </header>
 
-      {isLoading && <strong className={css.loading}>Loading notes...</strong>}
-      {isError && searchTerm.trim() !== "" && (
-        <ErrorMessage message="Something went wrong. Please try again." />
+      {notes.length === 0 ? (
+        <div className={css['no-notes-message']}>
+          <p>Нотаток немає. Створіть свою першу нотатку!</p>
+        </div>
+      ) : (
+        <NoteList notes={notes} />
       )}
-      {data && <NoteList notes={data.notes} />}
-      {isModalOpen && <NoteModal onClose={closeModal} />}
+
+      {isModalOpen && (
+        <Modal onClose={() => setIsModalOpen(false)}>
+          <NoteForm onCancel={() => setIsModalOpen(false)} />
+        </Modal>
+      )}
     </div>
   );
-}
+};
+
+export default App;
