@@ -1,3 +1,5 @@
 import css from './Loader.module.css';
-const Loader = () => <div className={css.loader}>Loading...</div>;
-export default Loader;
+
+export default function Loader() {
+  return <p className={css.text}>Loading notes, please wait...</p>;
+}

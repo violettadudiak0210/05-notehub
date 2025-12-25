@@ -1,25 +1,20 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Note } from '../../types/note';
 import css from './NoteList.module.css';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteNote } from '../../services/noteService';
-import { AxiosError } from 'axios';
-import type { ErrorResponse } from '../../services/noteService';
 
 interface NoteListProps {
   notes: Note[];
 }
 
-const NoteList = ({ notes }: NoteListProps) => {
+export default function NoteList({ notes }: NoteListProps) {
   const queryClient = useQueryClient();
 
-  const { mutate: handleDelete } = useMutation({
+  const { mutate: deleteMutation } = useMutation({
     mutationFn: deleteNote,
-    onSuccess: () => {
+    onSuccess() {
       queryClient.invalidateQueries({ queryKey: ['notes'] });
     },
-    onError: (err: AxiosError<ErrorResponse>) => {
-      alert("Не вдалося видалити нотатку: " + (err.response?.data?.message || err.message));
-    }
   });
 
   return (
@@ -31,8 +26,8 @@ const NoteList = ({ notes }: NoteListProps) => {
           <div className={css.footer}>
             <span className={css.tag}>{note.tag}</span>
             <button
+              onClick={() => deleteMutation(note.id)}
               className={css.button}
-              onClick={() => handleDelete(String(note.id))}
             >
               Delete
             </button>
@@ -41,6 +36,4 @@ const NoteList = ({ notes }: NoteListProps) => {
       ))}
     </ul>
   );
-};
-
-export default NoteList;
+}
